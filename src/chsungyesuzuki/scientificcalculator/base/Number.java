@@ -8,4 +8,6 @@ public interface Number {
     public Number getPower (Number exp);
     public Number getRoot (Number index);
     public String toString ();
+    public boolean equals (Number a);
+    public void simplify ();
 }
