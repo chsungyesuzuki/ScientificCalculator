@@ -7,9 +7,11 @@ import java.util.Arrays;
 public class Integer implements RationalNumber {
 
     private byte[] value;
+    private boolean signal;
 
     public Integer () {
-        value = null;
+        value = new byte [1];
+        signal = true;
     }
 
     public void setLength (final int length) {
@@ -34,6 +36,12 @@ public class Integer implements RationalNumber {
             value [i] = (byte) (copyOfA % 10);
             copyOfA /= 10;
         }
+        if (a < 0) {
+            signal = false;
+        }
+        else {
+            signal = true;
+        }
     }
 
     public Integer (final byte[] value) {
@@ -51,6 +59,9 @@ public class Integer implements RationalNumber {
         simplify ();
         a.simplify ();
         if (a instanceof Integer) {
+            if (((Integer) a).signal != signal) {
+                return signal;
+            }
             if (((Integer) a).value.length != value.length) {
                 return value.length > ((Integer) a).value.length;
             }
@@ -100,6 +111,22 @@ public class Integer implements RationalNumber {
         }
         simplify ();
         addend.simplify ();
+        if (signal != ((Integer) addend).signal) {
+            Integer subtractor;
+            Integer minuend;
+            if (signal) {
+                subtractor = this;
+                minuend = (Integer) addend;
+            }
+            else {
+                subtractor = (Integer) addend;
+                minuend = this;
+            }
+            ((Integer) minuend).signal = true;
+            Integer res = (Integer) subtractor.subtract(minuend);
+            ((Integer) minuend).signal = false;
+            return res;
+        }
         int bigger = Math.max (value.length, ((Integer) addend).value.length);
         int smaller = Math.min (value.length, ((Integer)addend).value.length);
         Integer big;
@@ -125,6 +152,12 @@ public class Integer implements RationalNumber {
             res.value [i] = sum;
         }
         res.value [bigger] = x;
+        if ((!signal) && (!((Integer) addend).signal)) {
+            res.signal = false;
+        }
+        else {
+            res.signal = true;
+        }
         res.simplify ();
         return res;
     }
@@ -158,7 +191,7 @@ public class Integer implements RationalNumber {
     public boolean equals (Number a) {
         simplify ();
         a.simplify ();
-        if ((!(a instanceof Integer)) || (((Integer) a).value.length != value.length)) {
+        if ((!(a instanceof Integer)) || (((Integer) a).value.length != value.length) || ((Integer) a).signal != signal) {
             return false;
         }
         for (int i = value.length - 1; i >= 0; i --) {
@@ -171,6 +204,10 @@ public class Integer implements RationalNumber {
 
     @Override
     public void simplify () {
+        if (value.length == 1 && value [0] == 0) {
+            signal = true;
+            return;
+        }
         int i = value.length - 1;
         for (; i >= 0; i --) {
             if (value [i] != 0) {
